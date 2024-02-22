@@ -8,14 +8,16 @@
     --bottom-height: 60px;
     --bottom-background: #222;
     --bottom-color: #fff;
-    --nav-middle-background: #00f;
+    --nav-middle-background: #008;
     --nav-middle-color: #fff;
-    --button-light-color: #00f;
-    --button-light-text: #fff;
+    --button-hover: #00f;
+    --button-color: #008;
+    --button-text: #fff;
     --button-height: 40px;
     --sidebar-width: 280px;
     --sidebar-background: #222;
     --sidebar-color: #fff;
+    --nav-color-hover: #00f;
 }
 
 body {
@@ -29,8 +31,8 @@ body {
 }
 
 button {
-    background: var(--button-light-color);
-    color: var(--button-light-text);
+    background: var(--button-color);
+    color: var(--button-text);
     height: var(--button-height);
     border-radius: 6px;
     border: none;
@@ -63,6 +65,7 @@ button {
 
 .header-bar-left {
     width: 100%;
+    gap: 10px;
 }
 
 .header-logo {
@@ -94,11 +97,11 @@ button {
 
 .layout-container {
     padding-top: var(--header-height);
-    margin: 10px;
+    padding-bottom: var(--bottom-height);
 }
 
-.bottom-bar-container {
-    width: 100%;
+.layout {
+    padding: 20px;
 }
 
 .bottom-bar {
@@ -141,12 +144,13 @@ button {
 
 .nav-icon {
     height: 40%;
+    width: 25px;
     fill: var(--header-color);
 }
 
 button .nav-icon {
     height: 100%;
-    fill: var(--button-light-text);
+    fill: var(--button-text);
 }
 
 .nav-label {
@@ -158,6 +162,20 @@ button .nav-icon {
     min-width: 190px;
     justify-content: space-between;
     gap: 5px;
+}
+
+@media (hover:hover) {
+    button:hover {
+        background: var(--button-hover);
+    }
+
+    .bottom-bar-nav-middle:hover {
+        background: var(--button-hover);
+    }
+    
+    .bottom-bar-nav:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
 }
 
 @media (max-width: 600px) {
@@ -176,20 +194,24 @@ button .nav-icon {
     .bottom-bar {
         top: calc(var(--header-height) - 10px);
         height: calc(var(--bottom-height) + 10px);
-        max-width: 900px;
+        max-width: 860px;
         border-radius: 10px;
     }
 
     .layout-container{
         padding-top: calc(var(--header-height) + var(--bottom-height));
     }
+
+    .bottom-bar-nav:hover {
+        border-radius: 10px;
+    }
+
 }
 
 @media (min-width: 1300px) {
     .bottom-bar {
         top: 0;
         height: var(--header-height);
-        max-width: 900px;
         background: transparent;
         z-index: 550;
     }
@@ -199,5 +221,8 @@ button .nav-icon {
     .layout-container{
         padding-top: var(--header-height);
         padding-left: var(--sidebar-width);
+    }
+    .bottom-bar-nav:hover {
+        border-radius: 0;
     }
 }
