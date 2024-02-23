@@ -14,6 +14,8 @@
     --button-color: #008;
     --button-text: #fff;
     --button-height: 40px;
+    --error-button-background: #800;
+    --error-button-background-hover: #f00;
     --sidebar-width: 280px;
     --sidebar-background: #222;
     --sidebar-color: #fff;
@@ -41,6 +43,12 @@ button {
     font-weight: 700;
 }
 
+.error-button {
+    padding: 10px 0px;
+    background: var(--error-button-background);
+    width: 40px;
+}
+
 .header-bar {
     display: flex;
     position: absolute;
@@ -61,11 +69,11 @@ button {
     justify-content: left;
     align-items: center;
     margin: 10px;
+    gap: 10px;
 }
 
 .header-bar-left {
     width: 100%;
-    gap: 10px;
 }
 
 .header-logo {
@@ -150,6 +158,7 @@ button {
 
 button .nav-icon {
     height: 100%;
+    width: inherit;
     fill: var(--button-text);
 }
 
@@ -157,16 +166,48 @@ button .nav-icon {
     display: flex;
 }
 
+.address {
+    align-items: center;
+    border-radius: 5px;
+    width: 100%;
+    min-width: 120px;
+    overflow: hidden;
+    justify-content: center;
+    /* position: fixed; */
+
+}
+
+.address-start {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: inline-block;
+    text-align: left;
+}
+
+.address-end {
+    text-align: right;
+}
+
 #connectButton {
     display: flex;
-    min-width: 190px;
+    width: 190px;
     justify-content: space-between;
     gap: 5px;
+    position: relative;
 }
 
 @media (hover:hover) {
     button:hover {
         background: var(--button-hover);
+    }
+
+    .error-button:hover {
+        background: var(--error-button-background-hover);
+    }
+
+    .error-button:hover .nav-icon {
+        fill: #ff0;
     }
 
     .bottom-bar-nav-middle:hover {
@@ -183,7 +224,10 @@ button .nav-icon {
         display: none;
     }
     #connectButton {
-        min-width: 20px;
+        width: 40px;
+        padding: 0px;
+        padding-top: 10px;
+        padding-bottom: 10px;
     }
     .header-title {
         display: none;
@@ -194,7 +238,7 @@ button .nav-icon {
     .bottom-bar {
         top: calc(var(--header-height) - 10px);
         height: calc(var(--bottom-height) + 10px);
-        max-width: 860px;
+        max-width: 800px;
         border-radius: 10px;
     }
 
