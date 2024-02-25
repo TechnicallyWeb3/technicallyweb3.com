@@ -20,6 +20,10 @@
     --sidebar-background: #222;
     --sidebar-color: #fff;
     --nav-color-hover: #00f;
+    --popup-menu-height: 500px;
+    --popup-menu-width: 400px;
+    --popup-menu-background: rgba(34, 34, 34, 0.8);
+    --popup-menu-color: #fff;
 }
 
 body {
@@ -55,21 +59,20 @@ button {
     opacity: 0; /* Hide the tooltip by default */
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
-  }
+}
 
-  #networkErrorButton[title]::before {
+#networkErrorButton[title]::before {
     right: 5px;
-  }
-  
-  button[title]:hover::before {
-    opacity: 1; /* Show the tooltip on hover */
-    visibility: visible;
-  }
+}
+
+#inboxButton {
+    display: none;
+} 
 
 .header-button {
     border-radius: 50%;
-    height: 50px;
-    width: 50px;
+    height: 45px;
+    width: 45px;
     padding: 10px 0;
 }
 
@@ -77,9 +80,13 @@ button {
     background: var(--error-button-background);
 }
 
+.connect-button {
+    margin: 0 auto;
+}
+
 .header-bar {
     display: flex;
-    position: absolute;
+    position: fixed;
     left: 0;
     right: 0;
     top: 0;
@@ -105,8 +112,8 @@ button {
     margin: 0 40px;
 }
 .header-bar-right {
-    min-width: 25vw;
-    justify-content: space-between;
+    justify-content: flex-end;
+    gap: 3vw;
 }
 
 /* .header-buttons {
@@ -124,6 +131,37 @@ button {
     text-decoration: none;
     color: var(--header-color);
     text-wrap: nowrap;
+}
+
+.popup-menu {
+    display: none;
+    position: fixed;
+    height: var(--popup-menu-height);
+    width: var(--popup-menu-width);
+    background: var(--popup-menu-background);
+    color: var(--popup-menu-color);
+    border-radius: 10px;
+    z-index: 700;
+}
+
+#profileMenu, #inboxMenu {
+    top: calc(var(--header-height) + 10px);
+    right: 10px;
+}
+
+.profile-list {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: 80%;
+    margin: 20px auto;
+    gap: 20px;
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar-container {
@@ -257,6 +295,11 @@ button .nav-icon {
         background: var(--button-hover);
     }
 
+    button[title]:hover::before {
+        opacity: 1; /* Show the tooltip on hover */
+        visibility: visible;
+    }
+
     .error-button:hover {
         background: var(--error-button-background-hover);
     }
@@ -272,6 +315,7 @@ button .nav-icon {
     .nav-item:hover {
         background: rgba(255, 255, 255, 0.1);
     }
+
 }
 
 @media (max-width: 599px) {
@@ -287,6 +331,9 @@ button .nav-icon {
     }
     .nav-label {
         display: none;
+    }
+    .mobile-nav-bar {
+        position: fixed;
     }
 }
 @media (min-width: 600px) {
@@ -343,10 +390,18 @@ button .nav-icon {
         padding-top: var(--header-height);
         padding-left: var(--sidebar-width);
     }
-    .header-bar-right {
-        min-width: 200px;
-    }
     .nav-item:hover {
         border-radius: 0;
     }
+}
+
+@media (max-height: 500px) {
+    .header-bar {
+        position: absolute;
+    }
+
+    .mobile-nav-bar {
+        position: absolute;
+    }
+
 }
