@@ -1,5 +1,8 @@
 const CHAIN_SYMBOL = 'S.ETH';
-const DAPP_CHAIN = '0xaa36a7';
+const DAPP_CHAIN = [
+    '0xaa36a7',
+    '0x89'
+];
 
 let currentChain;
 
@@ -16,6 +19,15 @@ let userData = {...defaultUser};
 
 const isRegistered = ((user) => {
     return userData.registrationDate > 0;
+});
+
+const chainSupported = ((chain) => {
+    let i;
+    for (i = 0; i < DAPP_CHAIN.length; i++) {
+        if (chain == DAPP_CHAIN[i]) break;
+    }
+    console.log((i < DAPP_CHAIN.length));
+    return (i < DAPP_CHAIN.length);
 });
 
 const idIcon = '<path d="M528 160V416c0 8.8-7.2 16-16 16H320c0-44.2-35.8-80-80-80H176c-44.2 0-80 35.8-80 80H64c-8.8 0-16-7.2-16-16V160H528zM64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zM272 256a64 64 0 1 0 -128 0 64 64 0 1 0 128 0zm104-48c-13.3 0-24 10.7-24 24s10.7 24 24 24h80c13.3 0 24-10.7 24-24s-10.7-24-24-24H376zm0 96c-13.3 0-24 10.7-24 24s10.7 24 24 24h80c13.3 0 24-10.7 24-24s-10.7-24-24-24H376z"/>';
@@ -98,15 +110,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function setChain() {
 
-        if (currentChain != DAPP_CHAIN) {
+        if (!chainSupported(currentChain)) {
             // Switch to a different network
             try {
                 await ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: DAPP_CHAIN }], //0x89 MATIC //0xaa36a7 Sepolia
+                    params: [{ chainId: DAPP_CHAIN[0] }], //0x89 MATIC //0xaa36a7 Sepolia
                 });
                 const switchResult = await ethereum.request({ method: 'eth_chainId' });
-                if (switchResult == DAPP_CHAIN) {
+                if (switchResult == DAPP_CHAIN[0]) {
                     console.log('Switched to the new network successfully');
                 } else {
                     console.error('Failed to switch the network');
@@ -123,14 +135,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         console.log('Network chain ID:', chainId);
         currentChain = chainId;
 
-        if (chainId != DAPP_CHAIN) {
+        if (!chainSupported(currentChain)) {
             networkErrorButton.style.display = 'inline-block';
             web3 = new Web3(new Web3.providers.HttpProvider('https://ethereum-sepolia.publicnode.com'));
-
         } else {
             networkErrorButton.style.display = 'none';
             web3 = new Web3(ethereum);
-
         }
     }
 
@@ -165,7 +175,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     
     connectButton.addEventListener('click', function() {
-        console.log("Connect button pressed");
         if (!isConnected) connectMetamask();
         else window.location = '/profile/';
     });
@@ -183,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             handleChainChanged(chainId);
         });
     } catch {
-        console.log("no ethereum")
+        console.error("no ethereum");
     }
 
     // main loop
