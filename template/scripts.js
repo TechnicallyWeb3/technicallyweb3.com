@@ -21,7 +21,7 @@ const defaultUser = {
 let userData = [];
 
 const isRegistered = ((user) => {
-    if (!isConnected) return false;
+    if (!isConnected || user == null) return false;
     return userData[user].registrationDate > 0;
 });
 
@@ -86,12 +86,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     const getProfileCardHTML = (user) => {
-        genericIcon = `<button class="header-button">${userData[user].username[0]}</button>`;
-        profilePic = `<img width="50px" height="50px" src="${userData[user].imageUrl}" />`;
-        const userImg = userData[user].imageUrl ? profilePic : genericIcon;
-        const userAddress = Web3.utils.toChecksumAddress(accounts[user]);
+        
+        const userAddress = Web3.utils.toChecksumAddress(connectedAccounts[user]);
         const userUsername = userData[user].username ? userData[user].username : userAddress.slice(0, -6);
-        const userAddressEnd = userData[user].username ? '' : userAddress.slice(-6)
+        const userAddressEnd = userData[user].username ? '' : userAddress.slice(-6);
+        const genericIcon = `<button class="header-button">${userUsername.slice(0, 2)}</button>`;
+        const profilePic = `<img width="50px" height="50px" src="${userData[user].imageUrl}" />`;
+        const userImg = userData[user].imageUrl ? profilePic : genericIcon;
         if (user == connectedAccount) {
             return `<div class="profile-card active-profile" id="profileCardActive"><div class="profile-img" id="profileCardActiveImg">${userImg}</div> <div class="address"><span class="address-start" id="profileCardActiveUsername">${userUsername}</span><span class="address-end" id="profileCardActiveAddress">${userAddressEnd}</span></div><a href="/profile/" class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M352 0c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9L370.7 96 201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L416 141.3l41.4 41.4c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6V32c0-17.7-14.3-32-32-32H352zM80 32C35.8 32 0 67.8 0 112V432c0 44.2 35.8 80 80 80H400c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32V432c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16H192c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z"/></svg></a></div>`;
         } else {
@@ -106,28 +107,42 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function switchAccounts(user) {
-        if (user >= userData.length) {
-            throw new Error ("User out of bounds.")
-        }
         connectedAccount = user;
-        console.log("Accounts Switched")
+        // console.log(`Accounts Switched ${connectedAccount}`);
+        const container = document.getElementById('profileListMenu');
 
-        const container = profileCardActive.parentNode;
 
-        container.innerHTML = getProfileCardHTML(connectedAccount);     
+        if (user != null) {
+            container.innerHTML = getProfileCardHTML(connectedAccount);    
+        } 
+
+        // console.log(`Users loaded ${userData.length}`);
+        // console.log(user != null);
         
         for (let i = 0; i < userData.length; i++) {
             if (i != connectedAccount) {
                 container.innerHTML += getProfileCardHTML(i);
                 const newProfileCard = document.getElementById(`profileCard${i}`);
-                console.log(newProfileCard)
-                newProfileCard.addEventListener('click', function() {
-                    switchAccounts(i);
-                });
-            }
-        }
+                // console.log(newProfileCard);
 
-        // profileCard.style.display = 'none';
+            (function(index) {
+                    newProfileCard.addEventListener('click', function() {
+                        switchAccounts(index);
+                    });
+            })(i);
+
+            }
+
+            // if (i != connectedAccount) {
+            //     container.innerHTML += getProfileCardHTML(i);
+            //     const newProfileCard = document.getElementById(`profileCard${i}`);
+            //     // console.log(newProfileCard);
+
+            //     newProfileCard.addEventListener('click', function() {
+            //         switchAccounts(i);
+            //     });
+            // }
+        }
 
         updateScreen();
 
@@ -143,20 +158,22 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         userData = [];
 
-        if (accounts.length > 0) {
+        if (connectedAccounts.length > 0) {
             // Perform actions when connected
             isConnected = true;
 
-            for (let i = 0; i < accounts.length; i++) {
+            for (let i = 0; i < connectedAccounts.length; i++) {
                 // test info
                 const testUser = {
                     registrationDate : 1,
                     username : '',
-                    imageUrl : '/assets/images/icon.png'
+                    imageUrl : ''
                 }
                 
                 userData.push(testUser);
-                console.log(`${i} , `)
+                // console.log(`${i} , `)
+                switchAccounts(0);
+
 
             }
 
@@ -165,10 +182,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             console.log('Disconnected from MetaMask');
             // Perform actions when disconnected
             isConnected = false;
+            switchAccounts(null);
 
         }
 
-        switchAccounts(0);
+
 
     }
 
@@ -209,6 +227,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function updateScreen() {
+        // profileListMenu.style.display = 'none';
 
         // Update the connected address
         if (isConnected) {

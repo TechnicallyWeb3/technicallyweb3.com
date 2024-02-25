@@ -131,6 +131,7 @@ button {
 
 .popup-menu {
     display: none;
+    flex-direction: column;
     position: fixed;
     height: var(--popup-menu-height);
     width: var(--popup-menu-width);
@@ -138,8 +139,6 @@ button {
     color: var(--popup-menu-color);
     border-radius: 10px;
     z-index: 700;
-    overflow-y: scroll;
-    scrollbar-width: none;
 }
 
 #profileMenu, #inboxMenu {
@@ -154,6 +153,8 @@ button {
     width: 80%;
     margin: 20px auto;
     gap: 20px;
+    overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 .profile-card {
@@ -290,7 +291,7 @@ button .nav-icon {
 
 #connectButton {
     display: flex;
-    width: 190px;
+    min-width: 200px;
     justify-content: space-between;
     gap: 5px;
     position: relative;
