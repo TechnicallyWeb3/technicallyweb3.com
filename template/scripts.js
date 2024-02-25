@@ -9,6 +9,8 @@ let currentChain;
 let isConnected = false;
 let connectedAddress;
 let connectedAccounts = [];
+let connectedAccount;
+
 
 const defaultUser = {
     registrationDate: 0, // uint64 minimum for timestamps
@@ -16,10 +18,11 @@ const defaultUser = {
     imageUrl: '',
 };
 
-let userData = {...defaultUser};
+let userData = [];
 
 const isRegistered = ((user) => {
-    return userData.registrationDate > 0;
+    if (!isConnected) return false;
+    return userData[user].registrationDate > 0;
 });
 
 const chainSupported = ((chain) => {
@@ -27,8 +30,7 @@ const chainSupported = ((chain) => {
     for (i = 0; i < DAPP_CHAIN.length; i++) {
         if (chain == DAPP_CHAIN[i]) break;
     }
-    console.log((i < DAPP_CHAIN.length));
-    return (i < DAPP_CHAIN.length);
+    return (i < DAPP_CHAIN.length || DAPP_CHAIN.length == 0);
 });
 
 const addIcon = '<path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/>';
@@ -83,33 +85,90 @@ document.addEventListener('DOMContentLoaded', async function () {
         
     }
 
+    const getProfileCardHTML = (user) => {
+        genericIcon = `<button class="header-button">${userData[user].username[0]}</button>`;
+        profilePic = `<img width="50px" height="50px" src="${userData[user].imageUrl}" />`;
+        const userImg = userData[user].imageUrl ? profilePic : genericIcon;
+        const userAddress = Web3.utils.toChecksumAddress(accounts[user]);
+        const userUsername = userData[user].username ? userData[user].username : userAddress.slice(0, -6);
+        const userAddressEnd = userData[user].username ? '' : userAddress.slice(-6)
+        if (user == connectedAccount) {
+            return `<div class="profile-card active-profile" id="profileCardActive"><div class="profile-img" id="profileCardActiveImg">${userImg}</div> <div class="address"><span class="address-start" id="profileCardActiveUsername">${userUsername}</span><span class="address-end" id="profileCardActiveAddress">${userAddressEnd}</span></div><a href="/profile/" class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M352 0c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9L370.7 96 201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L416 141.3l41.4 41.4c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6V32c0-17.7-14.3-32-32-32H352zM80 32C35.8 32 0 67.8 0 112V432c0 44.2 35.8 80 80 80H400c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32V432c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16H192c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z"/></svg></a></div>`;
+        } else {
+            return `<a href="javascript:void(0);" class="profile-card" id="profileCard${user}">
+            <div class="profile-img">
+                ${userImg}
+            </div> 
+            <div class="address"><span class="address-start">${userUsername}</span><span class="address-end">${userAddressEnd}</span></div>
+            <div class="nav-icon"  id="profileSwitch"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M0 224c0 17.7 14.3 32 32 32s32-14.3 32-32c0-53 43-96 96-96H320v32c0 12.9 7.8 24.6 19.8 29.6s25.7 2.2 34.9-6.9l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-9.2-9.2-22.9-11.9-34.9-6.9S320 19.1 320 32V64H160C71.6 64 0 135.6 0 224zm512 64c0-17.7-14.3-32-32-32s-32 14.3-32 32c0 53-43 96-96 96H192V352c0-12.9-7.8-24.6-19.8-29.6s-25.7-2.2-34.9 6.9l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6V448H352c88.4 0 160-71.6 160-160z"/></svg></svg></div>
+        </a>`
+        }
+    }
+
+    function switchAccounts(user) {
+        if (user >= userData.length) {
+            throw new Error ("User out of bounds.")
+        }
+        connectedAccount = user;
+        console.log("Accounts Switched")
+
+        const container = profileCardActive.parentNode;
+
+        container.innerHTML = getProfileCardHTML(connectedAccount);     
+        
+        for (let i = 0; i < userData.length; i++) {
+            if (i != connectedAccount) {
+                container.innerHTML += getProfileCardHTML(i);
+                const newProfileCard = document.getElementById(`profileCard${i}`);
+                console.log(newProfileCard)
+                newProfileCard.addEventListener('click', function() {
+                    switchAccounts(i);
+                });
+            }
+        }
+
+        // profileCard.style.display = 'none';
+
+        updateScreen();
+
+    }
+
     async function handleAccountsChanged(accounts) {
 
         profileMenu.style.display = 'none';
         connectedAccounts = accounts;
 
+        const switchAccountEvent = new CustomEvent('switchAccount', {detail: connectedAccount});
+        window.dispatchEvent(switchAccountEvent);
+
+        userData = [];
+
         if (accounts.length > 0) {
-
-            // Get checksummed address
-            connectedAddress = Web3.utils.toChecksumAddress(accounts[0]);
-
             // Perform actions when connected
             isConnected = true;
 
-            const switchAccountEvent = new CustomEvent('switchAccount', {detail: connectedAddress});
-            window.dispatchEvent(switchAccountEvent);
+            for (let i = 0; i < accounts.length; i++) {
+                // test info
+                const testUser = {
+                    registrationDate : 1,
+                    username : '',
+                    imageUrl : '/assets/images/icon.png'
+                }
+                
+                userData.push(testUser);
+                console.log(`${i} , `)
 
-            updateScreen();
+            }
 
         } else {
 
             console.log('Disconnected from MetaMask');
             // Perform actions when disconnected
             isConnected = false;
-            userData = {...defaultUser};
 
-            updateScreen();
         }
+
+        switchAccounts(0);
 
     }
 
@@ -153,27 +212,26 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Update the connected address
         if (isConnected) {
-            connectIcon.innerHTML = addIcon;
+            connectButton.style.display = 'none';
             inboxButton.style.display = 'block';
 
-            // test info
-            userData.registrationDate = 1;
-            userData.username = 'TechnicallyWeb3';
-
+            profileListMenu.style.display = 'flex';
 
             addressStart.textContent = '';
             addressEnd.textContent = addText;
 
         } else {
+            profileListMenu.style.display = 'none';
+            connectButton.style.display = 'flex';
             connectIcon.innerHTML = loginIcon;
             addressStart.textContent = '';
             addressEnd.textContent = loginText;
-            userData = {...defaultUser};
             inboxButton.style.display = 'none';
         }
 
-        console.log(`isConnected: ${isConnected?connectedAddress:isConnected}`);
-        console.log(`isUser: ${isRegistered() && userData.username ? userData.username : isRegistered()}`);
+        console.log(`isConnected: ${isConnected?connectedAccounts[connectedAccount]:isConnected}`);
+        console.log(`isUser: ${isRegistered(connectedAccount) && userData[connectedAccount].username ? userData[connectedAccount].username : isRegistered(connectedAccount)}`);
+        console.log(userData[connectedAccount]);
         
     }
     

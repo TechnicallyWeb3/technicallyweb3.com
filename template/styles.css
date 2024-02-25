@@ -80,10 +80,6 @@ button {
     background: var(--error-button-background);
 }
 
-.connect-button {
-    margin: 0 auto;
-}
-
 .header-bar {
     display: flex;
     position: fixed;
@@ -142,6 +138,8 @@ button {
     color: var(--popup-menu-color);
     border-radius: 10px;
     z-index: 700;
+    overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 #profileMenu, #inboxMenu {
@@ -162,6 +160,12 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    text-decoration: none;
+    color: var(--popup-menu-color);
+}
+
+.profile-username {
+    overflow: hidden;
 }
 
 .sidebar-container {
@@ -260,6 +264,8 @@ button .nav-icon {
 }
 
 .address {
+    display: flex;
+    padding: 0 20px;
     align-items: center;
     border-radius: 5px;
     width: 100%;
@@ -288,6 +294,7 @@ button .nav-icon {
     justify-content: space-between;
     gap: 5px;
     position: relative;
+    margin: auto;
 }
 
 @media (hover:hover) {
