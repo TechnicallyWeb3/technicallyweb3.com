@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function switchAccounts(user) {
+        console.log(`Switching to Account ${user}`);
         connectedAccount = user;
         // console.log(`Accounts Switched ${connectedAccount}`);
         const container = document.getElementById('profileListMenu');
@@ -118,30 +119,26 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // console.log(`Users loaded ${userData.length}`);
         // console.log(user != null);
-        
         for (let i = 0; i < userData.length; i++) {
             if (i != connectedAccount) {
                 container.innerHTML += getProfileCardHTML(i);
-                const newProfileCard = document.getElementById(`profileCard${i}`);
-                // console.log(newProfileCard);
+                let newProfileCard = document.getElementById(`profileCard${i}`);
 
-            (function(index) {
+                (function(index) {
+                    // console.log(`Adding event listener to ${newProfileCard.id}`);
                     newProfileCard.addEventListener('click', function() {
                         switchAccounts(index);
                     });
-            })(i);
+                    console.dir(newProfileCard)
+                })(i);
+                // newProfileCard.addEventListener('click', function() {
+                //     switchAccounts(i);
+                // });
+
+                console.log(`Added ${i}`);
 
             }
 
-            // if (i != connectedAccount) {
-            //     container.innerHTML += getProfileCardHTML(i);
-            //     const newProfileCard = document.getElementById(`profileCard${i}`);
-            //     // console.log(newProfileCard);
-
-            //     newProfileCard.addEventListener('click', function() {
-            //         switchAccounts(i);
-            //     });
-            // }
         }
 
         updateScreen();
@@ -165,17 +162,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             for (let i = 0; i < connectedAccounts.length; i++) {
                 // test info
                 const testUser = {
-                    registrationDate : 1,
+                    registrationDate : 0,
                     username : '',
                     imageUrl : ''
                 }
                 
                 userData.push(testUser);
                 // console.log(`${i} , `)
-                switchAccounts(0);
+                
 
 
             }
+
+            switchAccounts(0);
 
         } else {
 
