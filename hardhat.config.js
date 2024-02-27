@@ -34,7 +34,7 @@ module.exports = {
         path: "m/44'/60'/0'/0",
         count: 10
       },
-      gasPrice: 30000000000,
+      // gasPrice: 5000000000, // 5 gwei
     },
   },
 };

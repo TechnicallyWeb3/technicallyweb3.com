@@ -18,7 +18,6 @@ contract UserDatabase {
 
     /*
     
-    // 0 web3 address
     // 1 website
     // 2 business
     // 3 linkedin
@@ -41,6 +40,8 @@ contract UserDatabase {
     // 20 soundcloud
     // 21 spotify
     // 22 upwork
+    // 23 patreon
+    // 24 kickstarter
 
     */
 
@@ -93,14 +94,25 @@ contract UserDatabase {
         return  _userData[_idOfProfile[userProfile]];
     }
 
-    function _setUserData(uint256 id, address userAddress, UserData calldata newData) internal {
-        _idOfName[newData.userName] = id;
-        _idOfAddress[userAddress] = id;
-        _userData[id] = newData;
-        _userData[id].defaultAddress = userAddress;
+    function _getId(address userAddress) internal view returns (uint256) {
+        return _idOfAddress[userAddress];
     }
 
-    function _safeSetUserData(address userAddress, UserData calldata newData) internal {
+    function _getId(string memory userName) internal view returns (uint256) {
+        return _idOfName[userName];
+    }
+
+    function _getId(bytes memory userProfile) internal view returns (uint256) {
+        return _idOfProfile[userProfile];
+    }
+
+    function _setUserData(uint256 id, UserData memory newData) internal virtual {
+        _idOfName[newData.userName] = id;
+        _idOfAddress[newData.defaultAddress] = id;
+        _userData[id] = newData;
+    }
+
+    function _safeSetUserData(address userAddress, UserData memory newData) internal virtual {
         // checks for username availability
         require(userNameAvailable(userAddress, newData.userName), "userName unavailable");
         
@@ -137,7 +149,7 @@ contract UserDatabase {
             _userData[_idOfAddress[userAddress]].imgUrl = newData.imgUrl;
         }
 
-        // updates linkedProfiles if newData is not empty
+        // updates linkedProfiles if newData.linkedProfiles is not empty
         if (newData.linkedProfiles.length > 0) {
 
             // remove additional array storage slots if needed
@@ -158,10 +170,11 @@ contract UserDatabase {
 
     }
 
-    function _verifyProfile(address userAddress, Profile calldata profile, bool verified) internal {
+    function _verifyProfile(address userAddress, Profile calldata profile, bool verified) internal virtual {
         require(isUser(userAddress), "userAddress must be user");
         
         profileVerified[userAddress][abi.encode(profile)] = verified;
+        
         if (verified) {
             _idOfProfile[abi.encode(profile)] = _idOfAddress[userAddress];
         } else {

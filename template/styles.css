@@ -272,7 +272,6 @@ button .nav-icon {
     width: 100%;
     min-width: 120px;
     overflow: hidden;
-    justify-content: center;
     /* position: fixed; */
 
 }
