@@ -15,7 +15,59 @@ async function deploy() {
     const UserControl = await ethers.getContractFactory("UserControl");
 
     console.log("deploying UserControl");
-    userControl = await UserControl.deploy();
+    userControl = await UserControl.deploy([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25
+    ],[
+        'twitter',
+        'instagram',
+        'linkedin',
+        'tiktok',
+        'youtube',
+        'github',
+        'reddit',
+        'discord',
+        'telegram',
+        'snapchat',
+        'twitch',
+        'mastodon',
+        'patreon',
+        'quora',
+        'pintrest',
+        'tumblr',
+        'slack',
+        'stackoverflow',
+        'soundcloud',
+        'spotify',
+        'upwork',
+        'kickstarter',
+        'email',
+        'website',
+        'web3address'        
+    ]);
     console.log(`waiting for deployment of UserControl ${userControl.target}`);
     await userControl.waitForDeployment();
     console.log(`deployed UserControl ${userControl.target}`);

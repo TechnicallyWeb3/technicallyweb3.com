@@ -176,7 +176,22 @@ contract UserDatabase {
     function _setUserData(uint256 id, UserData memory newData) internal virtual {
         _idOfName[newData.userName] = id;
         _idOfAddress[newData.defaultAddress] = id;
-        _userData[id] = newData;
+        _userData[id].registrationDate = newData.registrationDate;
+        _userData[id].defaultAddress = newData.defaultAddress;
+        _userData[id].userName = newData.userName;
+        _userData[id].userBio = newData.userBio;
+        _userData[id].imgUrl = newData.imgUrl;
+        
+        for (uint256 i; i < newData.linkedProfiles.length; i++) {
+
+            if (i >= _userData[id].linkedProfiles.length) {
+                _userData[id].linkedProfiles.push(newData.linkedProfiles[i]);
+            } else {
+                _userData[id].linkedProfiles[i] = newData.linkedProfiles[i];
+            }
+            
+        }
+
         emit UserDataUpdated(newData.defaultAddress, newData.userName, newData.userBio, newData.imgUrl, newData.linkedProfiles);
     }
 

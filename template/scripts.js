@@ -1,5 +1,5 @@
 const USER_ABIFILE = '/artifacts/contracts/userControl.sol/UserControl.json';
-const USER_ADDRESS = '0xF7C255C599b464De52a71c84aD6d0ab193bd3593';
+const USER_ADDRESS = '0x6f380E5d68D7211f305976f86c66a22Ce17C3054';
 
 const DEFAULT_RPC = 'https://ethereum-sepolia.publicnode.com';
 const CHAIN_SYMBOL = 'S.ETH';
@@ -57,13 +57,25 @@ async function loadContract(abiFile, contractAddress) {
     });
 }
 
-async function loadMain() {
-    userContract = await loadContract(USER_ABIFILE, USER_ADDRESS);
-    await checkMetamask();
+async function updateUserData() {
+    console.log(connectedAccounts);
     for (let i = 0; i < connectedAccounts.length; i++) {
-        userData.push(await userContract.methods['getUserData(address)'](connectedAccounts[i]));
+        const address = Web3.utils.toChecksumAddress(connectedAccounts[i])
+        const newData = await userContract.methods['getUserData(address)'](address).call({ from: address });
+        userData.push(newData);
     }
     console.log(userData);
+}
+
+async function getUserData(address) {
+    return await userContract.methods['getUserData(address)'](address).call();
+}
+
+async function loadMain() {
+    await checkMetamask();
+    userContract = await loadContract(USER_ABIFILE, USER_ADDRESS);
+    await updateUserData();
+    console.log(userContract);
 }
 
 async function connectMetamask() {
@@ -136,11 +148,13 @@ const getProfileCardHTML = (user) => {
 function switchAccounts(user) {
     console.log(`Switching to Account ${user}`);
     connectedAccount = user;
+    connectedAddress = '';
     // console.log(`Accounts Switched ${connectedAccount}`);
     const container = document.getElementById('profileListMenu');
 
 
     if (user != null) {
+        connectedAddress = Web3.utils.toChecksumAddress(connectedAccounts[connectedAccount]);
         container.innerHTML = getProfileCardHTML(connectedAccount);    
     } 
 
