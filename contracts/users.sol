@@ -10,13 +10,14 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * @title UserDatabase
  * @dev A contract for managing user data and profiles.
  */
-contract UserDatabase {
+abstract contract UserDatabase {
     using Strings for string;
 
     /**
      * @dev Struct to store user data.
      */
     struct UserData {
+        bool indexUser;
         uint256 registrationDate;
         address defaultAddress;
         string userName;
@@ -59,6 +60,22 @@ contract UserDatabase {
     */
     mapping (bytes => uint256) _idOfProfile;
 
+    uint256[] _userList;
+
+    function _toLowercase(string memory input) internal pure returns (string memory) {
+		bytes memory bytesInput = bytes(input);
+		for (uint i = 0; i < bytesInput.length; i++) {
+            // checks for valid ascii characters // will allow unicode after building a string library
+            require (uint8(bytesInput[i]) > 41 && uint8(bytesInput[i]) < 127, "Only ASCII characters");
+			// Uppercase character...
+            if (uint8(bytesInput[i]) > 64 && uint8(bytesInput[i]) < 91) {
+                // add 32 to make it lowercase
+                bytesInput[i] = bytes1(uint8(bytesInput[i]) + 32);
+            }
+		}
+		return string(bytesInput);
+	}
+
     /**
         * @dev Checks if a username is available.
         * @param userAddress The address of the user.
@@ -66,6 +83,8 @@ contract UserDatabase {
         * @return Whether the username is available.
     */
     function userNameAvailable(address userAddress, string memory userName) public view returns (bool) {
+        // should check against standard characters to prevent injection attacks.
+        // if userName has a userId of 0, if userName is owned by userAddress already and if userName isn't empty.
         return _idOfName[userName] == 0 || _idOfName[userName] == _idOfAddress[userAddress];
     }
 
@@ -74,8 +93,8 @@ contract UserDatabase {
         * @param userId The ID of the user.
         * @return Whether the user exists.
     */
-    function isUser(uint256 userId) public view returns (bool) {
-        return _userData[userId].registrationDate > 0;
+    function isUserFromId(uint256 userId) public view returns (bool) {
+        return _userData[userId].registrationDate > 0 && _userData[userId].indexUser;
     }
     
     /**
@@ -83,8 +102,8 @@ contract UserDatabase {
         * @param userAddress The address of the user.
         * @return Whether the user exists.
     */
-    function isUser(address userAddress) public view returns (bool) {
-        return _userData[_idOfAddress[userAddress]].registrationDate > 0;
+    function isUserFromAddress(address userAddress) public view returns (bool) {
+        return _userData[_idOfAddress[userAddress]].registrationDate > 0 && _userData[_idOfAddress[userAddress]].indexUser;
     }
 
     /**
@@ -92,7 +111,7 @@ contract UserDatabase {
         * @param userName The username of the user.
         * @return Whether the user exists.
     */
-    function isUser(string memory userName) public view returns (bool) {
+    function isUserFromName(string memory userName) public view returns (bool) {
         return _userData[_idOfName[userName]].registrationDate > 0;
     }
 
@@ -101,8 +120,8 @@ contract UserDatabase {
         * @param userProfile The profile of the user.
         * @return Whether the user exists.
     */
-    function isUser(bytes memory userProfile) public view returns (bool) {
-        return _userData[_idOfProfile[userProfile]].registrationDate > 0;
+    function isUserFromProfile(bytes memory userProfile) public view returns (bool) {
+        return _userData[_idOfProfile[userProfile]].registrationDate > 0 && _userData[_idOfProfile[userProfile]].indexUser;
     }
 
     /**
@@ -110,8 +129,17 @@ contract UserDatabase {
         * @param userId The ID of the user.
         * @return The user data.
     */
-    function getUserData(uint256 userId) public view returns (UserData memory) {
-        return _userData[userId];
+    function getUserDataFromId(uint256 userId) public view returns (UserData memory) {
+        if (_userData[userId].indexUser) return _userData[userId];
+        return UserData(
+            true,
+            1,
+            address(1),
+            "Private User",
+            "This user has chosen not to index their account",
+            "/assets/images/private.png",
+            new Profile[](0)
+        );
     }
 
     /**
@@ -119,7 +147,7 @@ contract UserDatabase {
         * @param userAddress The address of the user.
         * @return The user data.
     */
-    function getUserData(address userAddress) public view returns (UserData memory) {
+    function getUserDataFromAddress(address userAddress) public view returns (UserData memory) {
         return _userData[_idOfAddress[userAddress]];
     }
 
@@ -128,7 +156,7 @@ contract UserDatabase {
         * @param userName The username of the user.
         * @return The user data.
     */
-    function getUserData(string memory userName) public view returns (UserData memory) {
+    function getUserDataFromName(string memory userName) public view returns (UserData memory) {
         return  _userData[_idOfName[userName]];
     }
 
@@ -137,7 +165,7 @@ contract UserDatabase {
         * @param userProfile The profile of the user.
         * @return The user data.
     */
-    function getUserData(bytes memory userProfile) public view returns (UserData memory) {
+    function getUserDataFromProfile(bytes memory userProfile) public view returns (UserData memory) {
         return  _userData[_idOfProfile[userProfile]];
     }
 
@@ -174,8 +202,10 @@ contract UserDatabase {
         * @param newData The new user data.
     */
     function _setUserData(uint256 id, UserData memory newData) internal virtual {
-        _idOfName[newData.userName] = id;
+        _idOfName[_toLowercase(newData.userName)] = id;
         _idOfAddress[newData.defaultAddress] = id;
+        
+        _userData[id].indexUser = newData.indexUser;
         _userData[id].registrationDate = newData.registrationDate;
         _userData[id].defaultAddress = newData.defaultAddress;
         _userData[id].userName = newData.userName;
@@ -189,10 +219,18 @@ contract UserDatabase {
             } else {
                 _userData[id].linkedProfiles[i] = newData.linkedProfiles[i];
             }
-            
+
         }
 
         emit UserDataUpdated(newData.defaultAddress, newData.userName, newData.userBio, newData.imgUrl, newData.linkedProfiles);
+    }
+
+    /**
+        * @dev Function to add a user to the user list.
+        * @param id The ID of the user.
+    */
+    function _addToUserList(uint256 id) internal {
+        _userList.push(id);
     }
 
     /**
@@ -205,20 +243,25 @@ contract UserDatabase {
         require(userNameAvailable(userAddress, newData.userName), "userName unavailable");
         
         // initial registration: set address, registration date and id if needed
-        if (!isUser(userAddress)) {
+        if (!isUserFromAddress(userAddress)) {
             require(!newData.userName.equal(''), "Username cannot be blank for registration");
             _idOfAddress[userAddress] = uint256(keccak256(abi.encode(userAddress, block.timestamp)));
             _userData[_idOfAddress[userAddress]].registrationDate = block.timestamp;
             _userData[_idOfAddress[userAddress]].defaultAddress = userAddress;
+            _userList.push(_idOfAddress[userAddress]);
         }
 
+        // update indexUser if needed checks if different
+        if (newData.indexUser != _userData[_idOfAddress[userAddress]].indexUser) {
+            _userData[_idOfAddress[userAddress]].indexUser = newData.indexUser;
+        }
         // update userName if needed checks if usernames are different or empty
         if (
             !newData.userName.equal(_userData[_idOfAddress[userAddress]].userName) && 
             !newData.userName.equal('')
         ) {
             _userData[_idOfAddress[userAddress]].userName = newData.userName;
-            _idOfName[newData.userName] = _idOfAddress[userAddress];
+            _idOfName[_toLowercase(newData.userName)] = _idOfAddress[userAddress];
         }
 
         // update userBio if needed checks if bios are different or empty
@@ -245,7 +288,7 @@ contract UserDatabase {
                 _userData[_idOfAddress[userAddress]].linkedProfiles.pop();
             }
 
-            // map calldata to storage
+            // map memory to storage
             for (uint256 i; i < _userData[_idOfAddress[userAddress]].linkedProfiles.length; i++) {
                 _userData[_idOfAddress[userAddress]].linkedProfiles[i] = newData.linkedProfiles[i];
             }
@@ -266,7 +309,7 @@ contract UserDatabase {
         * @param verified Whether the profile is verified.
     */
     function _verifyProfile(address userAddress, Profile calldata profile, bool verified) internal virtual {
-        require(isUser(userAddress), "userAddress must be user");
+        require(isUserFromAddress(userAddress), "userAddress must be user");
         
         profileVerified[userAddress][abi.encode(profile)] = verified;
         
@@ -277,6 +320,42 @@ contract UserDatabase {
         }
 
         emit ProfileVerified(userAddress, profile, verified);
+    }
+
+    function _getUserList(uint256 start, uint256 end) internal view returns (uint256[] memory) {
+        uint256[] memory userList = new uint256[](end - start);
+        for (uint256 i; i < userList.length; i++) {
+            userList[i] = _userList[start + i];
+        }
+        return userList;
+    }
+
+    function getUserList(uint256 pageIndex, uint256 count) public view returns (uint256[] memory) {
+        uint256 start = pageIndex * count;
+        uint256 end = count == 0 ? type(uint256).max : start + count;
+
+        if (start >= _userList.length) {
+            start = _userList.length - 1;
+        }
+        
+        if (end >= _userList.length) {
+            end = _userList.length - 1;
+        }
+
+        uint256[] memory userList = new uint256[](end - start + 1);
+        uint256 index;
+        for (uint256 i = start; i <= end; i++) {
+            if (_userData[_userList[i]].indexUser) {
+                userList[index] = _userList[i];
+                index++;
+            }
+        }
+
+        return userList;
+    }
+
+    function getUserCount() public view returns(uint256) {
+        return _userList.length;
     }
 
     /**

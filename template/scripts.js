@@ -1,5 +1,5 @@
 const USER_ABIFILE = '/artifacts/contracts/userControl.sol/UserControl.json';
-const USER_ADDRESS = '0x6f380E5d68D7211f305976f86c66a22Ce17C3054';
+const USER_ADDRESS = '0x5c2EEae5822b774B4758c3B2c8bC7aC8382F23e0';
 
 const DEFAULT_RPC = 'https://ethereum-sepolia.publicnode.com';
 const CHAIN_SYMBOL = 'S.ETH';
@@ -58,16 +58,24 @@ async function loadContract(abiFile, contractAddress) {
 }
 
 async function updateUserData() {
+    userData = [];
     console.log(connectedAccounts);
     for (let i = 0; i < connectedAccounts.length; i++) {
         const address = Web3.utils.toChecksumAddress(connectedAccounts[i])
-        const newData = await userContract.methods['getUserData(address)'](address).call({ from: address });
+        const newData = await userContract.methods['getUserDataFromAddress(address)'](address).call({ from: address });
         userData.push(newData);
     }
     console.log(userData);
 }
 
 async function getUserData(address) {
+    // console.dir(userContract.methods['getUserData(address)'](connectedAddress).encodeABI());
+    // console.dir(userContract.methods['0xffc9896b'](connectedAddress).encodeABI());
+    // console.dir(userContract.methods.getUserData('0xedE6f94B27D4E87a5C91b43D3F6CA428636E112D').encodeABI());
+    // console.dir(userContract.methods['isUser(address)'](connectedAddress).encodeABI());
+    // console.dir(userContract.methods['0x4209fff1'](connectedAddress).encodeABI());
+    // console.dir(userContract.methods.isUser('0xedE6f94B27D4E87a5C91b43D3F6CA428636E112D').encodeABI());
+    // process.stdout.write(JSON.stringify(userContract.methods['getUserData(address)']) + '\n');
     return await userContract.methods['getUserData(address)'](address).call();
 }
 

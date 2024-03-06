@@ -14,11 +14,13 @@
   "author": "",
   "license": "GPL-3.0",
   "devDependencies": {
-    "hardhat": "^2.20.1",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.20.1"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "@openzeppelin/contracts": "^5.0.1"
+    "@openzeppelin/contracts": "^5.0.1",
+    "@tw3/solidity": "^0.0.1",
+    "web3": "^4.5.0"
   }
 }

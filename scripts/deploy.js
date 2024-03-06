@@ -73,6 +73,7 @@ async function deploy() {
     console.log(`deployed UserControl ${userControl.target}`);
 
     tx = await userControl.setUserData([
+        true,
         0,
         '0x0000000000000000000000000000000000000000',
         'technicallydev',
