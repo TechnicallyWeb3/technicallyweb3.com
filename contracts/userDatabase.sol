@@ -92,7 +92,7 @@ struct Profile {
             "Username includes invalid chars"
         );
         // if userName has a userId of 0, if userName is owned by userAddress already and if userName isn't empty.
-        return _idOfName[userName.toLowerCase()] == 0 || _idOfName[userName.toLowerCase()] == _idOfAddress[userAddress];
+        return _idOfName[userName.toLowerCase()] == 0 || _idOfName[userName] == _idOfAddress[userAddress];
     }
 
     function _isUser(uint256 userId) internal view returns (bool) {
@@ -162,7 +162,6 @@ struct Profile {
 
     function _safeSetUserData(address userAddress, UserData memory newData) internal virtual {
         // checks for username availability
-        require(userNameAvailable(userAddress, newData.userName), "userName unavailable");
         
         // initial registration: set address, registration date and id if needed
         if (!_isUser(_idOfAddress[userAddress])) {
@@ -179,11 +178,12 @@ struct Profile {
         }
         // update userName if needed checks if usernames are different or empty
         if (
-            !newData.userName.toLowerCase().equals(getUserDataFromAddress(userAddress).userName.toLowerCase()) && 
+            !newData.userName.equals(getUserDataFromAddress(userAddress).userName) && 
             newData.userName.length() > 0
         ) {
             _userData[_idOfAddress[userAddress]].userName = newData.userName;
-            _idOfName[newData.userName.toLowerCase()] = _idOfAddress[userAddress];
+            require(userNameAvailable(userAddress, newData.userName), "userName unavailable");
+            _idOfName[newData.userName] = _idOfAddress[userAddress];
         }
 
         // update userBio if needed checks if bios are different or empty

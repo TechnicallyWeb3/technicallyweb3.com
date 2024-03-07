@@ -134,6 +134,7 @@ contract UserControl is UserDatabaseV2 {
     function linkProfile(string memory platform, string memory id) external {
         UserData memory userData = getUserDataFromAddress(msg.sender);
         require(msg.sender == userData.defaultAddress, "Unauthorized");
+        require(userData.linkedProfiles.length < 255, "Max Profiles Reached");
         
         uint256 platformId = getPlatformId(platform);
         Profile[] memory userProfiles = userData.linkedProfiles;

@@ -144,7 +144,8 @@ describe("Basic Tests", function () {
         tx = await userControl.connect(accounts[1])['getListData(uint256,uint256)'](0,19);
         console.log(tx);
 
-        
+        tx = await userControl['userNameAvailable(address,string)'](accounts[5], "ThechnicallyWEB5");
+        console.log(tx);
     });
 
 });
