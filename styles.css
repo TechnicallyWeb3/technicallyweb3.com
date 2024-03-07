@@ -158,12 +158,25 @@ button {
     scrollbar-width: none;
 }
 
+.community-member-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow the cards to wrap to the next line */
+    gap: 20px; /* Adjust the spacing between cards */
+}
+
 .profile-card {
     display: flex;
     align-items: center;
     justify-content: space-between;
     text-decoration: none;
     color: var(--popup-menu-color);
+}
+
+.profile-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover; /* Maintain aspect ratio */
+    border-radius: 50%; /* Make the image round */
 }
 
 .profile-username {
@@ -186,6 +199,8 @@ button {
 }
 
 .layout-container {
+    overflow: auto;
+    width: 100%;
     padding-top: var(--header-height);
     padding-bottom: var(--bottom-height);
 }
