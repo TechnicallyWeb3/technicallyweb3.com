@@ -1,5 +1,5 @@
 const USER_ABIFILE = '/artifacts/contracts/userControl.sol/UserControl.json';
-const USER_ADDRESS = '0x5c2EEae5822b774B4758c3B2c8bC7aC8382F23e0';
+const USER_ADDRESS = '0xd6B7980E08Ee8540F1046b564c4bE006a418eca4';
 
 const DEFAULT_RPC = 'https://ethereum-sepolia.publicnode.com';
 const CHAIN_SYMBOL = 'S.ETH';
@@ -62,10 +62,18 @@ async function updateUserData() {
     console.log(connectedAccounts);
     for (let i = 0; i < connectedAccounts.length; i++) {
         const address = Web3.utils.toChecksumAddress(connectedAccounts[i])
-        const newData = await userContract.methods['getUserDataFromAddress(address)'](address).call({ from: address });
+        let newData = []
+        try {
+            newData = await userContract.methods['getUserDataFromAddress(address)'](address).call({ from: address });
+        } catch (error) {
+            console.log(error);
+        }
         userData.push(newData);
+    
     }
     console.log(userData);
+    const userDataLoaded = new CustomEvent('userDataLoaded', {detail: userData[connectedAccount]});
+    window.dispatchEvent(userDataLoaded);
 }
 
 async function getUserData(address) {
@@ -80,10 +88,10 @@ async function getUserData(address) {
 }
 
 async function loadMain() {
-    await checkMetamask();
     userContract = await loadContract(USER_ABIFILE, USER_ADDRESS);
-    await updateUserData();
     console.log(userContract);
+    await updateUserData();
+    await checkMetamask();
 }
 
 async function connectMetamask() {
@@ -133,17 +141,19 @@ async function checkMetamask() {
 }
 
 const getProfileCardHTML = (user) => {
+
+    // console.log(connectedAccounts[user]);
     
     const userAddress = Web3.utils.toChecksumAddress(connectedAccounts[user]);
-    const userUsername = userData[user].username ? userData[user].username : userAddress.slice(0, -6);
-    const userAddressEnd = userData[user].username ? '' : userAddress.slice(-6);
+    const userUsername = userData[user].userName ? userData[user].userName : userAddress.slice(0, -6);
+    const userAddressEnd = userData[user].userName ? '' : userAddress.slice(-6);
     const genericIcon = `<button class="header-button">${userUsername.slice(0, 2)}</button>`;
-    const profilePic = `<img width="50px" height="50px" src="${userData[user].imageUrl}" />`;
-    const userImg = userData[user].imageUrl ? profilePic : genericIcon;
+    const profilePic = `<img width="50px" height="50px" src="${userData[user].imgUrl}" />`;
+    const userImg = userData[user].imgUrl ? profilePic : genericIcon;
     if (user == connectedAccount) {
         return `<div class="profile-card active-profile" id="profileCardActive"><div class="profile-img" id="profileCardActiveImg">${userImg}</div> <div class="address"><span class="address-start" id="profileCardActiveUsername">${userUsername}</span><span class="address-end" id="profileCardActiveAddress">${userAddressEnd}</span></div><a href="/template/profile/" class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M352 0c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9L370.7 96 201.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L416 141.3l41.4 41.4c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6V32c0-17.7-14.3-32-32-32H352zM80 32C35.8 32 0 67.8 0 112V432c0 44.2 35.8 80 80 80H400c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32V432c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V112c0-8.8 7.2-16 16-16H192c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z"/></svg></a></div>`;
     } else {
-        return `<a href="javascript:void(0);" class="profile-card" id="profileCard${user}">
+        return `<a href="javascript:void(0);" class="profile-card" id="profileCard${user}" onclick="switchAccounts(${user})">
         <div class="profile-img">
             ${userImg}
         </div> 
@@ -173,18 +183,11 @@ function switchAccounts(user) {
             container.innerHTML += getProfileCardHTML(i);
             let newProfileCard = document.getElementById(`profileCard${i}`);
 
-            (function(index) {
-                // console.log(`Adding event listener to ${newProfileCard.id}`);
-                newProfileCard.addEventListener('click', function() {
-                    switchAccounts(index);
-                });
-                console.dir(newProfileCard)
-            })(i);
             // newProfileCard.addEventListener('click', function() {
             //     switchAccounts(i);
             // });
 
-            console.log(`Added ${i}`);
+            // console.log(`Added ${i}`);
 
         }
 
@@ -202,27 +205,10 @@ async function handleAccountsChanged(accounts) {
     const switchAccountEvent = new CustomEvent('switchAccount', {detail: connectedAccount});
     window.dispatchEvent(switchAccountEvent);
 
-    userData = [];
-
     if (connectedAccounts.length > 0) {
         // Perform actions when connected
-        isConnected = true;
-
-        for (let i = 0; i < connectedAccounts.length; i++) {
-            // test info
-            const testUser = {
-                registrationDate : 0,
-                username : '',
-                imageUrl : ''
-            }
-            
-            userData.push(testUser);
-            // console.log(`${i} , `)
-            
-
-
-        }
-
+        isConnected = true;        
+        await updateUserData();
         switchAccounts(0);
 
     } else {
@@ -298,7 +284,6 @@ function updateScreen() {
 
     console.log(`isConnected: ${isConnected?connectedAccounts[connectedAccount]:isConnected}`);
     console.log(`isUser: ${isRegistered(connectedAccount) && userData[connectedAccount].username ? userData[connectedAccount].username : isRegistered(connectedAccount)}`);
-    console.log(userData[connectedAccount]);
     
 }
 

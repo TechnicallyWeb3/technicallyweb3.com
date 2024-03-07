@@ -2,13 +2,14 @@
 
 pragma solidity >=0.8.20 <0.9.0;
 
-import "./users.sol";
+import "./userDatabase.sol";
 
 /**
     * @title User Database Control
     * @dev A contract for allowing user control over their account.
 */
-contract UserControl is UserDatabase {
+contract UserControl is UserDatabaseV2 {
+    using String for string;
 
     address public owner;
 
@@ -126,35 +127,15 @@ contract UserControl is UserDatabase {
     }
 
     /**
-        * @dev Function to register a new user.
-        * @param username The username of the user.
-        * @param bio The bio of the user.
-        * @param imgUrl The image URL of the user.
-    */
-    function register(string memory username, string memory bio, string memory imgUrl, bool isPublic) external {
-        
-        UserData memory newData = UserData(
-            isPublic,
-            0,
-            msg.sender,
-            username,
-            bio,
-            imgUrl,
-            new Profile[](0)
-        );
-
-        _safeSetUserData(msg.sender, newData);
-    }
-
-    /**
         * @dev Function to link a profile to a user.
         * @param platform The platform of the profile.
         * @param id The ID of the profile.
     */
     function linkProfile(string memory platform, string memory id) external {
-        require(isUserFromAddress(msg.sender), "Must be a user");
-        uint256 platformId = getPlatformId(platform);
         UserData memory userData = getUserDataFromAddress(msg.sender);
+        require(msg.sender == userData.defaultAddress, "Unauthorized");
+        
+        uint256 platformId = getPlatformId(platform);
         Profile[] memory userProfiles = userData.linkedProfiles;
         Profile[] memory newProfiles = new Profile[](userProfiles.length + 1);
 
@@ -177,17 +158,10 @@ contract UserControl is UserDatabase {
 
     }
 
-    /**
-        * @dev Function to update user data.
-        * @param newData The updated UserData object.
-    */
-    function updateUser(UserData calldata newData) external {
-        require(msg.sender == newData.defaultAddress, "Can only update own userData");
-        _safeSetUserData(msg.sender, newData);
-    }
+    // bool public someBool;
 
-    function getFullUserList() external view returns (uint256[] memory) {
-        return _getUserList(0, getUserCount());
-    }
+    // function testIncludes(string memory someString) external {
+    //     someBool = !someString.includes('+');
+    // }
 
 }

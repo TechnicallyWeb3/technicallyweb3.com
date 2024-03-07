@@ -80,13 +80,13 @@ async function deploy() {
         'Hello World!',
         '/assets/images/logo.png',
         [
-            [8,'@technicallyweb3','0x0000000000000000000000000000000000000000']
+            [4,'@technicallyweb3','0x0000000000000000000000000000000000000000']
         ]
 
     ]);
     await tx.wait();
 
-    tx = await userControl['isUser(string)']('technicallydev');
+    tx = await userControl['getUserDataFromName(string)']('technicallydev');
     console.log(`technicallydev isUser ${tx}`);
 
 }

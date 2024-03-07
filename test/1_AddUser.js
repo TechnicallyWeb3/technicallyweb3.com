@@ -5,6 +5,7 @@ describe("Basic Tests", function () {
 
     let userControl;
     let tx;
+    let accounts;
 
     before(async () => {
         console.log("loading accounts");
@@ -76,11 +77,12 @@ describe("Basic Tests", function () {
     });
 
     it("Add and read user data", async function () {
+
         tx = await userControl.setUserData([
-            true,
+            false,
             0,
             '0x0000000000000000000000000000000000000000',
-            'technicallyweb3',
+            'TechnicallyWeb',
             'Hello World!',
             '/assets/images/logo.png',
             [
@@ -90,24 +92,59 @@ describe("Basic Tests", function () {
         ]);
         await tx.wait();
 
-        tx = await userControl['isUserFromName(string)']('technicallyweb3');
-        console.log(`technicallyweb3 isUser ${tx}`);
-
-        tx = await userControl['getUserDataFromName(string)']('technicallyweb3');
+        tx = await userControl['getUserDataFromName(string)']('TechnicallyWEb');
         console.log(tx);
 
-        tx = await userControl['isUserFromAddress(address)'](owner);
-        console.log(`owner isUser ${tx}`);
-
-        tx = await userControl['getUserDataFromAddress(address)'](owner);
+        tx = await userControl.connect(accounts[0])['getUserDataFromAddress(address)'](accounts[0]);
         console.log(tx);
 
-        tx = await userControl['getUserCount()']();
+        // tx = await userControl['testIncludes(string)']('<TechnicallyWEb"`<@');
+        // await tx.wait();
+
+        // tx = await userControl['someBool()']();
+        // console.log(tx);
+
+        // tx = await userControl['isUserFromAddress(address)'](owner);
+        // console.log(`owner isUser ${tx}`);
+
+        // tx = await userControl['getUserDataFromAddress(address)'](owner);
+        // console.log(tx);
+
+        // tx = await userControl['getUserCount()']();
+        // console.log(tx);
+
+        // tx = await userControl['getUserList(uint256,uint256)'](0,0);
+        // console.log(tx);
+
+    });
+
+    it("Add additional users", async function () {
+
+        for (let i = 0; i < 10; i++) {
+            privacy = i % 2 == 0 ? true : false;
+            tx = await userControl.connect(accounts[i]).setUserData([
+                privacy,
+                0,
+                '0x0000000000000000000000000000000000000000',
+                `TechnicallyWeb${i}`,
+                'Hello World!',
+                '/assets/images/logo.png',
+                [
+                    [4,'@technicallyweb3','0x0000000000000000000000000000000000000000']
+                ]
+    
+            ]);
+            await tx.wait();
+            console.log
+        }
+
+        tx = await userControl['getUserList(uint256,uint256)'](0,19);
         console.log(tx);
 
-        tx = await userControl['getUserList(uint256,uint256)'](0,1);
+        tx = await userControl.connect(accounts[1])['getListData(uint256,uint256)'](0,19);
         console.log(tx);
 
+        
     });
 
 });

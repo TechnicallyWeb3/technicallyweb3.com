@@ -2,8 +2,6 @@
 
 pragma solidity >=0.8.20 <0.9.0;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 // edited by ChatGPT to add natspec and events
 
 /**
@@ -11,7 +9,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
  * @dev A contract for managing user data and profiles.
  */
 abstract contract UserDatabase {
-    using Strings for string;
 
     /**
      * @dev Struct to store user data.
@@ -62,11 +59,26 @@ abstract contract UserDatabase {
 
     uint256[] _userList;
 
+    function _length(string memory inputString) internal pure returns (uint256) {
+        bytes memory inputBytes = bytes(inputString);
+        return inputBytes.length;
+    }
+
+    function _equals(string memory inputString, string memory compareString) internal pure returns (bool) {
+        bytes memory inputBytes = bytes(inputString);
+        bytes memory compareBytes = bytes(compareString);
+        if (inputBytes.length != compareBytes.length) return false;
+        for (uint256 i; i < inputBytes.length; i++) {
+            if (inputBytes[i] != compareBytes[i]) return false;
+        }
+        return true;
+    }
+
     function _toLowercase(string memory input) internal pure returns (string memory) {
 		bytes memory bytesInput = bytes(input);
 		for (uint i = 0; i < bytesInput.length; i++) {
             // checks for valid ascii characters // will allow unicode after building a string library
-            require (uint8(bytesInput[i]) > 41 && uint8(bytesInput[i]) < 127, "Only ASCII characters");
+            require (uint8(bytesInput[i]) > 31 && uint8(bytesInput[i]) < 127, "Only ASCII characters");
 			// Uppercase character...
             if (uint8(bytesInput[i]) > 64 && uint8(bytesInput[i]) < 91) {
                 // add 32 to make it lowercase
@@ -94,7 +106,7 @@ abstract contract UserDatabase {
         * @return Whether the user exists.
     */
     function isUserFromId(uint256 userId) public view returns (bool) {
-        return _userData[userId].registrationDate > 0 && _userData[userId].indexUser;
+        return _userData[userId].registrationDate > 1 && _userData[userId].indexUser;
     }
     
     /**
@@ -103,7 +115,7 @@ abstract contract UserDatabase {
         * @return Whether the user exists.
     */
     function isUserFromAddress(address userAddress) public view returns (bool) {
-        return _userData[_idOfAddress[userAddress]].registrationDate > 0 && _userData[_idOfAddress[userAddress]].indexUser;
+        return _userData[_idOfAddress[userAddress]].registrationDate > 1 && _userData[_idOfAddress[userAddress]].indexUser;
     }
 
     /**
@@ -112,7 +124,7 @@ abstract contract UserDatabase {
         * @return Whether the user exists.
     */
     function isUserFromName(string memory userName) public view returns (bool) {
-        return _userData[_idOfName[userName]].registrationDate > 0;
+        return _userData[_idOfName[_toLowercase(userName)]].registrationDate > 1;
     }
 
     /**
@@ -121,7 +133,7 @@ abstract contract UserDatabase {
         * @return Whether the user exists.
     */
     function isUserFromProfile(bytes memory userProfile) public view returns (bool) {
-        return _userData[_idOfProfile[userProfile]].registrationDate > 0 && _userData[_idOfProfile[userProfile]].indexUser;
+        return _userData[_idOfProfile[userProfile]].registrationDate > 1 && _userData[_idOfProfile[userProfile]].indexUser;
     }
 
     /**
@@ -130,16 +142,8 @@ abstract contract UserDatabase {
         * @return The user data.
     */
     function getUserDataFromId(uint256 userId) public view returns (UserData memory) {
-        if (_userData[userId].indexUser) return _userData[userId];
-        return UserData(
-            true,
-            1,
-            address(1),
-            "Private User",
-            "This user has chosen not to index their account",
-            "/assets/images/private.png",
-            new Profile[](0)
-        );
+        if (!isUserFromId(userId) || _userData[userId].indexUser) return _userData[userId];
+        return _userData[0];
     }
 
     /**
@@ -148,7 +152,8 @@ abstract contract UserDatabase {
         * @return The user data.
     */
     function getUserDataFromAddress(address userAddress) public view returns (UserData memory) {
-        return _userData[_idOfAddress[userAddress]];
+        if (!isUserFromId(_idOfAddress[userAddress]) || _userData[_idOfAddress[userAddress]].indexUser) return _userData[_idOfAddress[userAddress]];
+        return _userData[0];
     }
 
     /**
@@ -157,7 +162,8 @@ abstract contract UserDatabase {
         * @return The user data.
     */
     function getUserDataFromName(string memory userName) public view returns (UserData memory) {
-        return  _userData[_idOfName[userName]];
+        if (!isUserFromId(_idOfName[_toLowercase(userName)]) || _userData[_idOfName[_toLowercase(userName)]].indexUser) return  _userData[_idOfName[_toLowercase(userName)]];
+        return _userData[0];
     }
 
     /**
@@ -166,7 +172,8 @@ abstract contract UserDatabase {
         * @return The user data.
     */
     function getUserDataFromProfile(bytes memory userProfile) public view returns (UserData memory) {
-        return  _userData[_idOfProfile[userProfile]];
+        if (!isUserFromId(_idOfProfile[userProfile]) || _userData[_idOfProfile[userProfile]].indexUser) return  _userData[_idOfProfile[userProfile]];
+        return _userData[0];
     }
 
     /**
@@ -202,8 +209,6 @@ abstract contract UserDatabase {
         * @param newData The new user data.
     */
     function _setUserData(uint256 id, UserData memory newData) internal virtual {
-        _idOfName[_toLowercase(newData.userName)] = id;
-        _idOfAddress[newData.defaultAddress] = id;
         
         _userData[id].indexUser = newData.indexUser;
         _userData[id].registrationDate = newData.registrationDate;
@@ -221,6 +226,9 @@ abstract contract UserDatabase {
             }
 
         }
+
+        _idOfName[_toLowercase(newData.userName)] = id;
+        _idOfAddress[newData.defaultAddress] = id;
 
         emit UserDataUpdated(newData.defaultAddress, newData.userName, newData.userBio, newData.imgUrl, newData.linkedProfiles);
     }
@@ -244,7 +252,7 @@ abstract contract UserDatabase {
         
         // initial registration: set address, registration date and id if needed
         if (!isUserFromAddress(userAddress)) {
-            require(!newData.userName.equal(''), "Username cannot be blank for registration");
+            require(_length(newData.userName) > 0, "Username cannot be blank for registration");
             _idOfAddress[userAddress] = uint256(keccak256(abi.encode(userAddress, block.timestamp)));
             _userData[_idOfAddress[userAddress]].registrationDate = block.timestamp;
             _userData[_idOfAddress[userAddress]].defaultAddress = userAddress;
@@ -257,8 +265,8 @@ abstract contract UserDatabase {
         }
         // update userName if needed checks if usernames are different or empty
         if (
-            !newData.userName.equal(_userData[_idOfAddress[userAddress]].userName) && 
-            !newData.userName.equal('')
+            !_equals(_toLowercase(newData.userName), _toLowercase(_userData[_idOfAddress[userAddress]].userName)) && 
+            _length(newData.userName) > 0
         ) {
             _userData[_idOfAddress[userAddress]].userName = newData.userName;
             _idOfName[_toLowercase(newData.userName)] = _idOfAddress[userAddress];
@@ -266,16 +274,16 @@ abstract contract UserDatabase {
 
         // update userBio if needed checks if bios are different or empty
         if (
-            !newData.userBio.equal(_userData[_idOfAddress[userAddress]].userBio) && 
-            !newData.userBio.equal('')
+            !_equals(newData.userBio, _userData[_idOfAddress[userAddress]].userBio) && 
+            _length(newData.userBio) > 0
         ) {
             _userData[_idOfAddress[userAddress]].userBio = newData.userBio;
         }
 
         // update imgUrl if needed checks if imgs are different or empty
         if (
-            !newData.imgUrl.equal(_userData[_idOfAddress[userAddress]].imgUrl) && 
-            !newData.imgUrl.equal('')
+            !_equals(newData.imgUrl, _userData[_idOfAddress[userAddress]].imgUrl) && 
+            _length(newData.imgUrl) > 0
         ) {
             _userData[_idOfAddress[userAddress]].imgUrl = newData.imgUrl;
         }
@@ -347,6 +355,30 @@ abstract contract UserDatabase {
         for (uint256 i = start; i <= end; i++) {
             if (_userData[_userList[i]].indexUser) {
                 userList[index] = _userList[i];
+                index++;
+            }
+        }
+
+        return userList;
+    }
+
+    function getUserListData(uint256 pageIndex, uint256 count) public view returns (UserData[] memory) {
+        uint256 start = pageIndex * count;
+        uint256 end = count == 0 ? type(uint256).max : start + count;
+
+        if (start >= _userList.length) {
+            start = _userList.length - 1;
+        }
+        
+        if (end >= _userList.length) {
+            end = _userList.length - 1;
+        }
+
+        UserData[] memory userList = new UserData[](end - start + 1);
+        uint256 index;
+        for (uint256 i = start; i <= end; i++) {
+            if (_userData[_userList[i]].indexUser) {
+                userList[index] = _userData[_userList[i]];
                 index++;
             }
         }

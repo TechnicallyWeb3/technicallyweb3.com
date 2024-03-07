@@ -4,6 +4,7 @@ async function updateUser() {
     userimg = userimgInput.value;
 
     userObject = [
+        userindexInput.checked,
         0,
         connectedAddress,
         username,
@@ -22,7 +23,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     function updatePage() {
         profileAddressStart.textContent = connectedAddress.slice(0, -6);
-        profileAddressStart.textContent = connectedAddress.slice(-6);
+        profileAddressEnd.textContent = connectedAddress.slice(-6);
+        if (userData[connectedAccount]) {
+            console.log(userData[connectedAccount])
+            
+            usernameInput.value = userData[connectedAccount].userName;
+            userbioInput.value = userData[connectedAccount].userBio;
+            userimgInput.value = userData[connectedAccount].imgUrl;
+            userindexInput.checked = userData[connectedAccount].indexUser;
+        }
+        
     }
 
     updateUserButton.addEventListener('click', async function() {
@@ -30,6 +40,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         updatePage();
     });
 
-
+    window.addEventListener('userDataLoaded', function(data) {
+        updatePage();
+    });
 
 });
